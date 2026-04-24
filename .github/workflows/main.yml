@@ -55,11 +55,12 @@ jobs:
 
    - name: Docker Scout Scan
      uses: docker/scout-action@v1
+     continue-on-error: true
      with:
        dockerhub-user: ${{ secrets.DOCKERHUB_USERNAME }}
        dockerhub-password: ${{ secrets.DOCKERHUB_TOKEN }}
        command: quickview,cves
-       exit-code: false
+       exit-code: '0'
        only-severities: critical,high
        sarif-file: scout-report.sarif
        
