@@ -44,7 +44,7 @@ jobs:
 
   image_scan:
    name: Build Image and Run Image Scan
-    if: github.event_name == 'push'
+   if: github.event_name == 'push'
    runs-on: ubuntu-latest
 
    steps:
