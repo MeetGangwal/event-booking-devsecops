@@ -1,8 +1,5 @@
 name: CI_DevSecOps
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 on:
   push:
     tags: [ "*" ]
@@ -62,6 +59,7 @@ jobs:
        dockerhub-user: ${{ secrets.DOCKERHUB_USERNAME }}
        dockerhub-password: ${{ secrets.DOCKERHUB_TOKEN }}
        command: quickview,cves
+       exit-code: false
        only-severities: critical,high
        sarif-file: scout-report.sarif
        
