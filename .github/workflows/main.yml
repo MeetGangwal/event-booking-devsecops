@@ -21,7 +21,7 @@ jobs:
      uses: gitleaks/gitleaks-action@v2
      with:
       args: detect --no-color --report-format sarif --report-path gitleaks-report.sarif
-#till here ------------------------------------------------------------------------------
+#till here added-----------------------------------------------------------------------------
 
    - name: Set up Node
      uses: actions/setup-node@v6
@@ -173,13 +173,39 @@ jobs:
             --no-lb
             --k3s-arg "--no-deploy=traefik,servicelb,metrics-server@server:*"
 
-      - name: Apply k8s manifests
+      # - name: Apply k8s manifests
+      #   run: |
+      #     kubectl apply -f ./k8s/mongo-config.yaml
+      #     kubectl apply -f ./k8s/mongo-secret.yaml
+      #     kubectl apply -f ./k8s/mongo.yaml
+      #     kubectl apply -f ./k8s/webapp.yaml
+        - name: Apply k8s config
+          run: |
+            kubectl apply -f ./k8s/mongo-config.yaml
+      - name: Apply k8s config
         run: |
           kubectl apply -f ./k8s/mongo-config.yaml
-          kubectl apply -f ./k8s/mongo-secret.yaml
+
+      - name: Create Mongo secret from GitHub Secrets
+  run: |
+    kubectl delete secret mongo-secret --ignore-not-found
+    kubectl create secret generic mongo-secret \
+      --from-literal=mongo-user="${{ secrets.MONGO_USERNAME }}" \
+      --from-literal=mongo-password="${{ secrets.MONGO_PASSWORD }}"
+        run: |
+          kubectl delete secret mongo-secret --ignore-not-found
+          kubectl create secret generic mongo-secret \
+            --from-literal=mongo-user="${{ secrets.MONGO_USERNAME }}" \
+            --from-literal=mongo-password="${{ secrets.MONGO_PASSWORD }}"
+
+- name: Apply app manifests
+  run: |
+    kubectl apply -f ./k8s/mongo.yaml
+    kubectl apply -f ./k8s/webapp.yaml
+      - name: Apply app manifests
+        run: |
           kubectl apply -f ./k8s/mongo.yaml
           kubectl apply -f ./k8s/webapp.yaml
-
       - name: List pods and services
         run: |
           kubectl get pods
@@ -190,6 +216,7 @@ jobs:
         # times out. Should add a timeout condition to the loop.
         run: |
           while [[ $(kubectl get pods -n default -l app=webapp -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do echo "waiting for pod" && sleep 1; done
+          timeout 300s bash -c 'while [[ $(kubectl get pods -n default -l app=webapp -o "jsonpath={..status.conditions[?(@.type==\"Ready\")].status}") != "True" ]]; do echo "waiting for pod" && sleep 2; done'
           sleep 10
       - name: Port Forward to Service
         run: 'kubectl port-forward -n default service/webapp-service 3000:3000 &'

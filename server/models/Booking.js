@@ -7,16 +7,16 @@ const bookingSchema = new mongoose.Schema({
   email: { type: String, required: true },
   phone: { type: String },
   tickets: { type: Number, required: true, min: 1 },
-  ticketType: { 
-    type: String, 
-    enum: ['standard', 'vip', 'premium'], 
-    default: 'standard' 
+  ticketType: {
+    type: String,
+    enum: ['standard', 'vip', 'premium'],
+    default: 'standard'
   },
   totalAmount: { type: Number, required: true },
-  status: { 
-    type: String, 
-    enum: ['confirmed', 'pending', 'cancelled'], 
-    default: 'confirmed' 
+  status: {
+    type: String,
+    enum: ['confirmed', 'pending', 'cancelled'],
+    default: 'confirmed'
   },
   orderId: { type: String },
   bookingDate: { type: Date, default: Date.now }
