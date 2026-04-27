@@ -163,7 +163,6 @@ jobs:
 #      - name: Create kind cluster
 #        uses: helm/kind-action@v1.0.0
 
-
       - name: "Create single k3d Cluster with imported Registry"
         uses: AbsaOSS/k3d-action@v2
         with:
