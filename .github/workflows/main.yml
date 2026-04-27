@@ -50,7 +50,7 @@ jobs:
 
 #added also here by meet------------------------------------------------------------------
    - name: Upload Gitleaks findings
-     if: success() && exists('gitleaks-report.sarif')
+     if: always() && hashFiles('gitleaks-report.sarif') != ''
      uses: actions/upload-artifact@v4
      with:
       name: gitleaks-findings
