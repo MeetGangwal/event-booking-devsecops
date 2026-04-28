@@ -225,26 +225,10 @@ jobs:
         with:
           target: http://localhost:3000
 
-  monitoring_observability:
-    name: Monitoring with Prometheus and Grafana
-    if: github.event_name == 'push'
-    runs-on: ubuntu-latest
-    needs: deploy-app-on-k3d-and-zap-scan
-    timeout-minutes: 15
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
       - name: Setup Helm
         uses: azure/setup-helm@v4
 
-      - name: Verify Kubernetes access
-        run: |
-          kubectl get nodes
-          kubectl get pods -A
-
-      - name: Add Prometheus Helm Repo
+      - name: Add Prometheus Repo
         run: |
           helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
           helm repo update
@@ -255,17 +239,21 @@ jobs:
             --namespace monitoring \
             --create-namespace \
             --wait \
-            --timeout 10m
+            --timeout 15m
 
       - name: Verify Monitoring Pods
         run: |
           kubectl get pods -n monitoring
+          kubectl wait --for=condition=Ready pod --all -n monitoring --timeout=300s
+
+      - name: Verify Monitoring Services
+        run: |
           kubectl get svc -n monitoring
 
-      - name: Wait for Grafana Ready
+      - name: Final Summary
         run: |
-          kubectl rollout status deployment/monitoring-grafana -n monitoring --timeout=300s
-
-      - name: Show Summary
-        run: |
+          echo "Application deployed successfully"
+          echo "ZAP scan completed"
           echo "Prometheus and Grafana installed successfully"
+
+    
