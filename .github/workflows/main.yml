@@ -239,8 +239,9 @@ jobs:
           --version 45.7.1 \
           --namespace monitoring \
           --create-namespace \
+          --set prometheus-node-exporter.enabled=false \
           --wait \
-          --timeout 15m
+          --timeout 10m
 
       - name: Verify Monitoring Pods
         run: |
