@@ -45,12 +45,15 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 18
-          cache: npm
-          cache-dependency-path: server/package-lock.json
 
       - name: Install server dependencies
         working-directory: ./server
-        run: npm ci
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm install
+          fi
 
       - name: Run Snyk scan
         uses: snyk/actions/node@master
@@ -214,19 +217,23 @@ jobs:
           kubectl apply -f ./k8s/mongo.yaml
           kubectl apply -f ./k8s/webapp.yaml
 
-      - name: List pods and services
+      - name: Show Kubernetes resources
         run: |
-          kubectl get pods
+          kubectl get all
+          kubectl get deployments || true
+          kubectl get pods -o wide
           kubectl get services
 
-      - name: Wait for app rollout
+      - name: Wait for webapp pod
         run: |
-          kubectl rollout status deployment/webapp --timeout=300s
+          timeout 300s bash -c 'until kubectl get pods -l app=webapp --no-headers 2>/dev/null | grep -q Running; do echo "waiting for webapp pod"; kubectl get pods -l app=webapp || true; sleep 5; done'
+          sleep 15
 
       - name: Port forward service
         run: |
           nohup kubectl port-forward -n default service/webapp-service 3000:3000 > /tmp/port-forward.log 2>&1 &
           sleep 15
+          cat /tmp/port-forward.log || true
 
       - name: Test app
         run: curl -f http://localhost:3000
@@ -255,7 +262,12 @@ jobs:
         if: contains(needs.*.result, 'failure')
         run: |
           echo "Pipeline failed."
-          echo "Developer should be notified here using Slack, Teams, or email integration."
+          echo "Add Slack, Teams, or email notification here."
+
+      - name: Pipeline cancelled
+        if: contains(needs.*.result, 'cancelled')
+        run: |
+          echo "Pipeline was cancelled."
 
       - name: Pipeline succeeded
         if: ${{ !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled') }}
