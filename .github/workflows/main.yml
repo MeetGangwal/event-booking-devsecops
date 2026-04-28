@@ -57,6 +57,7 @@ jobs:
         with:
           name: gitleaks-findings
           path: gitleaks-report.sarif
+
   sonarcloud_scan:
     name: SonarCloud Code Quality Analysis
     runs-on: ubuntu-latest
@@ -77,6 +78,7 @@ jobs:
             -Dsonar.projectKey=MeetGangwal_event-booking-devsecops
             -Dsonar.sources=client,server,app
             -Dsonar.exclusions=**/node_modules/**,**/dist/**,**/build/**,**/coverage/**
+
   image_scan:
     name: Build Image and Run Image Scan
     if: github.event_name == 'push'
