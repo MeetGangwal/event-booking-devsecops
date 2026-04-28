@@ -125,10 +125,11 @@ jobs:
 
       - name: Docker Scout scan
         uses: docker/scout-action@v1
-        continue-on-error: true
         with:
           command: cves
           image: ${{ secrets.DOCKERHUB_USERNAME }}/k8s-demo-app:v1.0
+          dockerhub-user: ${{ secrets.DOCKERHUB_USERNAME }}
+          dockerhub-password: ${{ secrets.DOCKERHUB_TOKEN }}
           only-severities: critical,high
           sarif-file: scout-report.sarif
           summary: true
@@ -213,9 +214,12 @@ jobs:
           sleep 15
 
       - name: Port forward service
-        run: |
-          kubectl port-forward -n default service/webapp-service 3000:3000 > /tmp/port-forward.log 2>&1 &
-          sleep 15
+        uses: aymanbagabas/kubectl-port-forward@v1
+        with:
+          context: CICD-test-cluster
+          namespace: default
+          resource: service/webapp-service
+          port-mapping: 3000:3000
 
       - name: Test app
         run: |
