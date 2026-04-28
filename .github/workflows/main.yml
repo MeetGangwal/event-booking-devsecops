@@ -236,10 +236,11 @@ jobs:
       - name: Install Monitoring Stack
         run: |
           helm upgrade --install monitoring prometheus-community/kube-prometheus-stack \
-            --namespace monitoring \
-            --create-namespace \
-            --wait \
-            --timeout 15m
+          --version 45.7.1 \
+          --namespace monitoring \
+          --create-namespace \
+          --wait \
+          --timeout 15m
 
       - name: Verify Monitoring Pods
         run: |
