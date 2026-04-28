@@ -29,6 +29,5 @@ resource "aws_iam_role" "lambda_role" {
   })
 
   tags = local.common_tags
+
 }
-
-
