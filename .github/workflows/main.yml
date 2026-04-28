@@ -63,7 +63,6 @@ jobs:
     name: SonarCloud Code Quality Analysis
     runs-on: ubuntu-latest
     needs: sca_scan
-    needs: sca_scan
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -80,30 +79,7 @@ jobs:
             -Dsonar.projectKey=MeetGangwal_event-booking-devsecops
             -Dsonar.sources=client,server,app
             -Dsonar.exclusions=**/node_modules/**,**/dist/**,**/build/**,**/coverage/**
-  terraform_validate:
-    name: Terraform Init Validate
-    runs-on: ubuntu-latest
-    needs: sonarcloud_scan
 
-    defaults:
-      run:
-        working-directory: terraform
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-
-      - name: Terraform Init
-        run: terraform init
-
-      - name: Terraform Format Check
-        run: terraform fmt -check
-
-      - name: Terraform Validate
-        run: terraform validate
   terraform_validate:
     name: Terraform Init Validate
     runs-on: ubuntu-latest
