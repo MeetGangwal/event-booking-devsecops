@@ -58,10 +58,30 @@ jobs:
           name: gitleaks-findings
           path: gitleaks-report.sarif
 
+  sonarcloud_scan:
+    name: SonarCloud Code Quality Analysis
+    runs-on: ubuntu-latest
+    needs: sca_scan
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarqube-scan-action@v5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: >
+            -Dsonar.organization=meetgangwal
+            -Dsonar.projectKey=MeetGangwal_event-booking-devsecops
+            -Dsonar.sources=client,server,app
+            -Dsonar.exclusions=**/node_modules/**,**/dist/**,**/build/**,**/coverage/**
   terraform_validate:
     name: Terraform Init Validate
     runs-on: ubuntu-latest
-    needs: sca_scan
+    needs: sonarcloud_scan
 
     defaults:
       run:
@@ -86,7 +106,7 @@ jobs:
   image_scan:
     name: Build Image and Run Image Scan
     if: github.event_name == 'push'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest 
     needs: terraform_validate
 
     steps:
@@ -202,3 +222,4 @@ jobs:
         uses: zaproxy/action-baseline@v0.10.0
         with:
           target: http://localhost:3000
+#done all
