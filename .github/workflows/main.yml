@@ -6,21 +6,26 @@ on:
       - "*"
     branches:
       - main
-      - feature/**
       - develop
+      - feature/**
   pull_request:
     branches:
       - "**"
+
+permissions:
+  contents: read
+  security-events: write
 
 jobs:
   sca_scan:
     name: Run Snyk and Gitleaks Scan
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # FIX 1: Fetch all history
+          fetch-depth: 0
 
       - name: Run Gitleaks secret scan
         uses: gitleaks/gitleaks-action@v2
@@ -28,14 +33,13 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Node
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v4
         with:
           node-version: 18
 
       - name: Install server dependencies
-        run: |
-          cd ./server
-          npm install
+        working-directory: ./server
+        run: npm install
 
       - name: Run Snyk scan
         uses: snyk/actions/node@master
@@ -63,6 +67,7 @@ jobs:
     name: SonarCloud Code Quality Analysis
     runs-on: ubuntu-latest
     needs: sca_scan
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -122,12 +127,11 @@ jobs:
         uses: docker/scout-action@v1
         continue-on-error: true
         with:
-          dockerhub-user: ${{ secrets.DOCKERHUB_USERNAME }}
-          dockerhub-password: ${{ secrets.DOCKERHUB_TOKEN }}
-          command: quickview,cves
-          exit-code: "0"
+          command: cves
+          image: ${{ secrets.DOCKERHUB_USERNAME }}/k8s-demo-app:v1.0
           only-severities: critical,high
           sarif-file: scout-report.sarif
+          summary: true
 
       - name: Upload Docker Scout findings
         if: always() && hashFiles('scout-report.sarif') != ''
@@ -155,16 +159,13 @@ jobs:
           path: trivy-results.sarif
 
       - name: Login to Docker Hub
-        uses: docker/login-action@v4
+        uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Push Docker image
-        run: |
-          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/k8s-demo-app:v1.0 .
-          echo "Pushing image to Docker Hub..."
-          docker push ${{ secrets.DOCKERHUB_USERNAME }}/k8s-demo-app:v1.0
+        run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/k8s-demo-app:v1.0
 
   deploy-app-on-k3d-and-zap-scan:
     name: Deploy app on k3d and run ZAP scan
@@ -208,20 +209,19 @@ jobs:
 
       - name: Wait for app
         run: |
-          timeout 300s bash -c 'until [[ "$(kubectl get pods -n default -l app=webapp -o jsonpath="{..status.conditions[?(@.type==\"Ready\")].status}")" == "True" ]]; do echo "waiting for pod"; sleep 2; done'
-          sleep 10
+          timeout 300s bash -c 'until kubectl get pods -l app=webapp | grep -q Running; do echo "waiting for pod"; sleep 5; done'
+          sleep 15
 
       - name: Port forward service
         run: |
-          kubectl port-forward -n default service/webapp-service 3000:3000 &
-          sleep 10
+          kubectl port-forward -n default service/webapp-service 3000:3000 > /tmp/port-forward.log 2>&1 &
+          sleep 15
 
       - name: Test app
         run: |
           curl -v http://localhost:3000
 
       - name: ZAP scan
-        uses: zaproxy/action-baseline@v0.10.0
+        uses: zaproxy/action-baseline@v0.14.0
         with:
           target: http://localhost:3000
-#done all
