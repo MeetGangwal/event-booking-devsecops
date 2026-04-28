@@ -181,7 +181,7 @@ jobs:
         with:
           cluster-name: CICD-test-cluster
           args: >-
-            --agents 3
+            --agents 1
             --no-lb
             --k3s-arg "--no-deploy=traefik,servicelb,metrics-server@server:*"
 
@@ -228,34 +228,38 @@ jobs:
       - name: Setup Helm
         uses: azure/setup-helm@v4
 
-      - name: Add Prometheus Repo
+      - name: Add Helm Repositories
         run: |
           helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+          helm repo add grafana https://grafana.github.io/helm-charts
           helm repo update
 
-      - name: Install Monitoring Stack
+      - name: Install Prometheus
         run: |
-          helm upgrade --install monitoring prometheus-community/kube-prometheus-stack \
-          --version 45.7.1 \
-          --namespace monitoring \
-          --create-namespace \
-          --set prometheus-node-exporter.enabled=false \
-          --wait \
-          --timeout 10m
+          helm upgrade --install prometheus prometheus-community/prometheus \
+            --namespace monitoring \
+            --create-namespace \
+            --wait \
+            --timeout 5m
+
+      - name: Install Grafana
+        run: |
+          helm upgrade --install grafana grafana/grafana \
+            --namespace monitoring \
+            --set adminPassword=admin123 \
+            --wait \
+            --timeout 5m
 
       - name: Verify Monitoring Pods
         run: |
           kubectl get pods -n monitoring
-          kubectl wait --for=condition=Ready pod --all -n monitoring --timeout=300s
-
-      - name: Verify Monitoring Services
-        run: |
           kubectl get svc -n monitoring
 
       - name: Final Summary
         run: |
           echo "Application deployed successfully"
           echo "ZAP scan completed"
-          echo "Prometheus and Grafana installed successfully"
+          echo "Prometheus installed"
+          echo "Grafana installed"
 
     
