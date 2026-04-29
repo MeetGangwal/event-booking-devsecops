@@ -1,7 +1,4 @@
-version: '3.8'
-
 services:
-  # MongoDB Database
   mongodb:
     image: mongo:7
     container_name: ticketshield-db
@@ -14,10 +11,16 @@ services:
       - mongo-data:/data/db
     networks:
       - ticketshield-net
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
-  # Backend API
   server:
-    build: ./server
+    build:
+      context: ./server
+      dockerfile: Dockerfile
     container_name: ticketshield-server
     ports:
       - "5000:5000"
@@ -27,13 +30,15 @@ services:
       JWT_SECRET: ticketshield_jwt_secret_change_in_production
       NODE_ENV: production
     depends_on:
-      - mongodb
+      mongodb:
+        condition: service_healthy
     networks:
       - ticketshield-net
 
-  # Frontend Client
   client:
-    build: ./client
+    build:
+      context: ./client
+      dockerfile: Dockerfile
     container_name: ticketshield-client
     ports:
       - "3000:80"

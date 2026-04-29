@@ -9,7 +9,7 @@ updates:
     directory: "/app"
     schedule:
       interval: "weekly"
-  
+
   # Add this section for each directory with a Dockerfile, K8s manifest, or Helm chart
   # They must use a semver tag, and Dependabot must be able to access the registry
   # You can give it access to private ones:

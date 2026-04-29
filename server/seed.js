@@ -185,7 +185,7 @@ const events = [
 const seedDB = async () => {
   try {
     await connectDB();
-    
+
     // Clear existing data
     await Event.deleteMany({});
     await User.deleteMany({});

@@ -3,9 +3,9 @@ const mongoose = require('mongoose');
 const eventSchema = new mongoose.Schema({
   title: { type: String, required: true },
   description: { type: String, required: true },
-  category: { 
-    type: String, 
-    required: true, 
+  category: {
+    type: String,
+    required: true,
     enum: ['comedy', 'cricket', 'music'],
     lowercase: true
   },
