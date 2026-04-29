@@ -1,7 +1,4 @@
-version: '3.8'
-
 services:
-  # MongoDB Database
   mongodb:
     image: mongo:7
     container_name: ticketshield-db
@@ -16,13 +13,14 @@ services:
       - ticketshield-net
     healthcheck:
       test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
-      interval: 5s
+      interval: 10s
       timeout: 5s
-      retries: 3
+      retries: 5
 
-  # Backend API
   server:
-    build: ./server
+    build:
+      context: ./server
+      dockerfile: Dockerfile
     container_name: ticketshield-server
     ports:
       - "5000:5000"
@@ -37,9 +35,10 @@ services:
     networks:
       - ticketshield-net
 
-  # Frontend Client
   client:
-    build: ./client
+    build:
+      context: ./client
+      dockerfile: Dockerfile
     container_name: ticketshield-client
     ports:
       - "3000:80"
